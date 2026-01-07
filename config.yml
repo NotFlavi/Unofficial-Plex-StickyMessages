@@ -1,0 +1,38 @@
+# This is a modified version of StickyMessages made by brindisicontroll.comeback, originally sent by Swqpping on 20/08/2025 at 7:48 PM. This is not an official release.
+
+
+Enabled: true
+
+# Title format for stickied messages
+StickiedMessageTitle: "📌 __**Stickied Message:**__"
+
+# Automatically enable slowmode in the channel with a sticky message?
+EnableSlowmode: true
+SlowmodeDelay: 3 # Delay in seconds for slowmode
+
+# Maximum messages in the channel before the bot sends the sticky message again
+MaxMessages: 3
+
+# Enable or disable embeds for stickied messages
+EnableEmbeds: true
+
+# Customize appearance for stickied EMBED messages
+EmbedSettings:
+  Embed:
+    Title: "📌 __**Stickied Message:**__"
+    Color: "#5e99ff"  # Hex color code
+    Image: "" # Recommended Size: 450x103, Leave blank for none
+    CustomThumbnailURL: ""  # Use a custom image URL, leave blank to disable
+    Timestamp: false
+    Footer:
+      Enabled: true
+      CustomIconURL: ""  # Use a custom image URL, ONLY WORKS IF TEXT IS NOT BLANK!, Leave blank to disable
+      text: ""
+
+# Webhook settings for sticky messages
+Webhooks:
+  EnabledByDefault: true
+  Name: "Sticky"
+  AvatarURL: ""  # Optional: URL to avatar image for the webhook
+  CheckIntervalSeconds: 300  # Interval to verify/recreate webhooks
+  CreateOnStartup: true  # Verify and create missing webhooks at startup
