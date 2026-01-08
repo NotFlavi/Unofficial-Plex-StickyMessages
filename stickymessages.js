@@ -3,11 +3,90 @@ const fs = require("fs");
 const Discord = require("discord.js");
 const config = yaml.load(fs.readFileSync("./addons/StickyMessages/config.yml", "utf8"));
 const StickyMessageModel = require("./StickyModel");
+const VersionChecker = require('./VersionChecker');
+
+// =========================================================================== 
+// Version Checking & Startup Message 
+// =========================================================================== 
+const ADDON_NAME = 'Sticky Messages v2';
+const CURRENT_VERSION = '1.0.1';
+const DONATION_LINKS = [
+    { name: 'PayPal', url: 'backupbrindisi@gmail.com' },
+    { name: 'LTC', url: 'MUDCaPTBX6yjB1eNzFhsAphwV1ujN1eJ8V' }
+];
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/** 
+ * Checks for new updates and logs the result to the console. 
+ */
+async function runVersionCheck() {
+    console.log('\x1b[33mChecking for updates...\x1b[0m');
+    await delay(12000); // 12-second delay 
+
+    const checker = new VersionChecker(ADDON_NAME, CURRENT_VERSION);
+    const checkResult = await checker.checkForUpdates();
+
+    console.log('\n\x1b[32m' + '='.repeat(60) + '\x1b[0m');
+
+    if (checkResult.success) {
+        if (checkResult.isOutdated) {
+            console.log(`\x1b[1m🚨 \x1b[31mUPDATE AVAILABLE for ${ADDON_NAME}\x1b[0m 🚨`);
+            console.log(`   \x1b[90mCurrent Version:\x1b[0m \x1b[1m${checkResult.current}\x1b[0m`);
+            console.log(`   \x1b[90mLatest Version:\x1b[0m \x1b[1m\x1b[32m${checkResult.latest}\x1b[0m`);
+            if (checkResult.description) {
+                console.log(`   \x1b[90mChanges:\x1b[0m ${checkResult.description}`);
+            }
+            if (checkResult.urgent) {
+                console.log('   \x1b[91m⚠️ URGENT UPDATE RECOMMENDED\x1b[0m');
+            }
+            if (checkResult.downloadUrl) {
+                console.log(`   \x1b[90mDownload:\x1b[0m \x1b[4m${checkResult.downloadUrl}\x1b[0m`);
+            }
+        } else if (checkResult.isCurrent) {
+            console.log(`\x1b[1m✅ \x1b[32m${ADDON_NAME} is up to date!\x1b[0m`);
+            console.log(`   \x1b[90mVersion:\x1b[0m \x1b[1m${checkResult.current}\x1b[0m`);
+        } else if (checkResult.isNewer) {
+            console.log(`\x1b[1m🔧 \x1b[36mDevelopment version detected for ${ADDON_NAME}\x1b[0m`);
+            console.log(`   \x1b[90mYour Version:\x1b[0m \x1b[1m${checkResult.current}\x1b[0m`);
+            console.log(`   \x1b[90mLatest Public Version:\x1b[0m \x1b[1m${checkResult.latest}\x1b[0m`);
+        }
+    } else {
+        console.log(`\x1b[1m❌ \x1b[33mVersion check failed for ${ADDON_NAME}\x1b[0m`);
+        console.log(`   \x1b[90mReason:\x1b[0m ${checkResult.error}`);
+    }
+    console.log('\x1b[32m' + '='.repeat(60) + '\x1b[0m\n');
+}
 
 const cooldowns = new Map();
 
 module.exports.register = ({ on, client }) => {
     if (!config.Enabled) return;
+
+    /**
+     * Displays a fancy startup message with addon information and donation links.
+     */
+    function displayStartupMessage() {
+        const author = 'brindisicontroll.comeback';
+        const donationText = DONATION_LINKS.map(link => `\x1b[96m${link.name}\x1b[0m: \x1b[4m${link.url}\x1b[0m`).join('\n');
+
+        console.log('\n\x1b[32m' + '='.repeat(60) + '\x1b[0m');
+        console.log(`\x1b[1m✨ \x1b[36m${ADDON_NAME}\x1b[0m is now active and running! \x1b[1m✨`);
+        console.log(`   \x1b[90mVersion:\x1b[0m \x1b[1m${CURRENT_VERSION}\x1b[0m`);
+        console.log(`   \x1b[90mCreated by:\x1b[0m \x1b[1m${author}\x1b[0m`);
+        console.log('\n\x1b[93mEnjoying the addon? Consider supporting the developer:\x1b[0m');
+        console.log(donationText);
+        console.log('\x1b[32m' + '='.repeat(60) + '\x1b[0m\n');
+    }
+
+    // Display startup message and run initial version check
+    (async () => {
+        await runVersionCheck();
+        displayStartupMessage();
+    })();
+
+    // Schedule daily version checks
+    setInterval(runVersionCheck, 1000 * 60 * 60 * 24);
 
     const ensureWebhooks = async () => {
         try {
