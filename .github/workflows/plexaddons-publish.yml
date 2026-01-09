@@ -1,0 +1,26 @@
+# .github/workflows/plexaddons-publish.yml
+name: Publish to PlexAddons
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish to PlexAddons
+        run: |
+          # Extract version from tag (removes 'v' prefix if present)
+          VERSION=${{ github.event.release.tag_name }}
+          VERSION=${VERSION#v}
+          
+          curl -X POST "https://addons.plexdev.live/api/v1/automation/addons/${{ github.event.repository.name }}/publish" \
+            -H "X-API-Key: ${{ secrets.PLEXADDONS_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"version\": \"${VERSION}\",
+              \"download_url\": \"${{ github.event.release.zipball_url }}\",
+              \"description\": \"${{ github.event.release.name }}\",
+              \"changelog\": $(echo '${{ github.event.release.body }}' | jq -Rs .)
+            }"
