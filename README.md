@@ -60,3 +60,13 @@ Displays a complete list of all active sticky messages across all channels, show
 2.  Ensure dependencies are installed.
 3.  Start the bot. The addon will automatically load the configurations.
 
+## Technical Changes
+- Version checks run daily with safe error handling
+- Config-driven cooldown reduces unnecessary processing in busy channels
+- Cleanup is limited when messageId is missing (scan up to 100 recent messages; supports text and embeds)
+- Unified embed footer setup with optional iconURL
+- EmbedSettings.Embed.Image is used consistently for embed images
+- Numeric slowmode “off” using 0
+- `/sticky create`: validates `count` (min 1) and uses `deferReply`/`editReply` to avoid timeouts
+- `/sticky list`: truncates long message previews (~200 chars)
+- Default fallback `MaxMessages = 10` when not set

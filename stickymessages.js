@@ -86,7 +86,9 @@ module.exports.register = ({ on, client }) => {
     })();
 
     // Schedule daily version checks
-    setInterval(runVersionCheck, 1000 * 60 * 60 * 24);
+    setInterval(() => {
+        runVersionCheck().catch(() => {});
+    }, 1000 * 60 * 60 * 24);
 
     const ensureWebhooks = async () => {
         try {
@@ -140,16 +142,18 @@ module.exports.register = ({ on, client }) => {
             stickyMessage.msgCount += 1;
 
             if (!cooldowns.has(message.channel.id) || cooldowns.get(message.channel.id) <= Date.now()) {
-                cooldowns.set(message.channel.id, Date.now() + 1 * 1000);
+                const baseCd = Number(config.CooldownSeconds || 1);
+                const cdMs = Math.max(1, baseCd) * 1000;
+                cooldowns.set(message.channel.id, Date.now() + cdMs);
 
-                const maxMessages = stickyMessage.customMaxMessages || config.MaxMessages;
+                const maxMessages = stickyMessage.customMaxMessages || config.MaxMessages || 10;
                 if (stickyMessage.msgCount >= maxMessages) {
                     if (stickyMessage.messageId) {
                         const oldMsg = await message.channel.messages.fetch(stickyMessage.messageId).catch(() => null);
                         if (oldMsg) await oldMsg.delete().catch(() => {});
                     } else {
-                        const messages = await message.channel.messages.fetch();
-                        messages.forEach(async (msg) => {
+                        const messages = await message.channel.messages.fetch({ limit: 100 }).catch(() => null);
+                        if (messages) for (const msg of messages.values()) {
                             const isEmbed = stickyMessage.useEmbed !== undefined ? stickyMessage.useEmbed : (config.EnableEmbeds !== undefined ? config.EnableEmbeds : true);
                             if (
                                 (!isEmbed && msg.content && msg.content.includes(stickyMessage.message)) ||
@@ -157,20 +161,19 @@ module.exports.register = ({ on, client }) => {
                             ) {
                                 await msg.delete().catch(() => {});
                             }
-                        });
+                        }
                     }
 
                     const embed = new Discord.EmbedBuilder();
                     if (config.EmbedSettings.Embed.Title) embed.setTitle(config.EmbedSettings.Embed.Title);
                     embed.setDescription(stickyMessage.message);
                     if (config.EmbedSettings.Embed.Color) embed.setColor(config.EmbedSettings.Embed.Color);
-                    if (config.EmbedSettings.Embed.Image) embed.setImage(config.EmbedSettings.Embed.PanelImage);
+                    if (config.EmbedSettings.Embed.Image) embed.setImage(config.EmbedSettings.Embed.Image);
                     if (config.EmbedSettings.Embed.CustomThumbnailURL) embed.setThumbnail(config.EmbedSettings.Embed.CustomThumbnailURL);
                     if (config.EmbedSettings.Embed.Footer.Enabled && config.EmbedSettings.Embed.Footer.text) {
-                        embed.setFooter({ text: config.EmbedSettings.Embed.Footer.text });
-                    }
-                    if (config.EmbedSettings.Embed.Footer.CustomIconURL) {
-                        embed.setFooter({ text: config.EmbedSettings.Embed.Footer.text, iconURL: config.EmbedSettings.Embed.Footer.CustomIconURL });
+                        const footer = { text: config.EmbedSettings.Embed.Footer.text };
+                        if (config.EmbedSettings.Embed.Footer.CustomIconURL) footer.iconURL = config.EmbedSettings.Embed.Footer.CustomIconURL;
+                        embed.setFooter(footer);
                     }
                     if (config.EmbedSettings.Embed.Timestamp) embed.setTimestamp();
 
