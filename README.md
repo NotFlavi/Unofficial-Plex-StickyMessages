@@ -1,3 +1,5 @@
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D8M226BS99)
+
 # Unofficial Plex StickyMessages
 
 This is a modified version of StickyMessages made by `brindisicontroll.comeback`, originally sent by `Swqpping` on 20/08/2025. This is not an official release.
